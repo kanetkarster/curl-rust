@@ -4,7 +4,7 @@ pub use self::response::{Headers,Response};
 pub mod body;
 pub mod handle;
 pub mod header;
-mod response;
+pub mod response;
 
 #[inline]
 pub fn handle() -> Handle {
