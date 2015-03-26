@@ -1,9 +1,8 @@
-#![feature(io, path, core, fs)]
+#![feature(convert)]
 
-extern crate "pkg-config" as pkg_config;
+extern crate pkg_config;
 
 use std::env;
-use std::io::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -36,7 +35,7 @@ fn main() {
 
     if target.contains("i686") {
         cflags.push_str(" -m32");
-    } else if target.as_slice().contains("x86_64") {
+    } else if target.contains("x86_64") {
         cflags.push_str(" -m64");
     }
     if !target.contains("i686") {
@@ -44,7 +43,7 @@ fn main() {
     }
 
     let src = env::current_dir().unwrap();
-    let dst = PathBuf::new(&env::var_os("OUT_DIR").unwrap());
+    let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
     let _ = fs::create_dir(&dst.join("build"));
 
@@ -109,7 +108,7 @@ fn main() {
     // Which one does windows generate? Who knows!
     let p1 = dst.join("build/lib/.libs/libcurl.a");
     let p2 = dst.join("build/lib/.libs/libcurl.lib");
-    if p1.exists() {
+    if fs::metadata(&p1).is_ok() {
         t!(fs::copy(&p1, &dst.join("lib/libcurl.a")));
     } else {
         t!(fs::copy(&p2, &dst.join("lib/libcurl.a")));
@@ -137,5 +136,7 @@ fn make() -> &'static str {
 fn which(cmd: &str) -> Option<PathBuf> {
     let cmd = format!("{}{}", cmd, env::consts::EXE_SUFFIX);
     let paths = env::var_os("PATH").unwrap();
-    env::split_paths(&paths).map(|p| p.join(&cmd)).find(|p| p.exists())
+    env::split_paths(&paths).map(|p| p.join(&cmd)).find(|p| {
+        fs::metadata(p).is_ok()
+    })
 }
